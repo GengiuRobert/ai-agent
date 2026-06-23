@@ -1,2 +1,7 @@
 // All tools combined for the agent
-export const tools = {};
+
+import { dateTimeTool } from "./dateTime.ts";
+
+export const tools = {
+  dateTimeTool,
+};

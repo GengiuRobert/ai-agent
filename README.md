@@ -1,33 +1,67 @@
-# Build an AI Agent from Scratch Workshop
+# AI Agent Playground
 
-- Watch the workshop on [Frontend Masters](https://frontendmasters.com/workshops/build-ai-agent/). 
-- View the [course notes](https://clumsy-humor-894.notion.site/Agent-from-scratch-13554fed51a380749554c44aa8989406?pvs=4)
+A simple AI Agent project for experimenting with agent architectures, tool usage, memory systems, and OpenAI models.
 
-## Setup Instructions
+---
 
-This repo requires **Node.js version 20+** or **bun v1.0.20**.
+## Prerequisites
 
-The `main` branch contains the final application. To code along with the workshop, checkout the `step/1` branch. You will also need an [API Key from OpenAI](https://platform.openai.com/settings/organization/api-keys).
+Before starting, make sure you have:
+
+- Node.js 20+
+- npm or bun
+- An OpenAI API key
+
+---
+
+## Installation
+
+Clone the repository:
 
 ```bash
-git clone https://github.com/Hendrixer/agent-from-scratch.git
-cd agent-from-scratch
-git checkout step/1
-npm install # or bun install
+git clone https://github.com/GengiuRobert/ai-agent
+
+cd ai-agent
 ```
 
-To run the project:
+Install dependencies:
+
+```bash
+npm install
+
+# or
+
+bun install
+```
+
+---
+
+## Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+---
+
+## Running the Project
+
+Start the development server:
+
+```bash
+npm run dev
+
+# or
+
+bun run dev
+```
+
+For production:
 
 ```bash
 npm start
-# or
-bun run index.ts
 ```
 
-## OpenAI API Key
-
-Create an [API Key from OpenAI](https://platform.openai.com/settings/organization/api-keys) and save it in a `.env` file:
-
-```
-OPENAI_API_KEY='YOUR_API_KEY'
-```
+---

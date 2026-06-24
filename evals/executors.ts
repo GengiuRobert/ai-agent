@@ -5,10 +5,17 @@ import type {
   MultiTurnResult,
 } from "./types.ts";
 
-import { generateText, stepCountIs, tool, type ToolSet } from "ai";
+import {
+  generateText,
+  stepCountIs,
+  tool,
+  type ModelMessage,
+  type ToolSet,
+} from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
-import { buildMessages } from "./utils.ts";
+import { buildMessages, buildMockedTools } from "./utils.ts";
+import { SYSTEM_PROMPT } from "../src/agent/system/prompt.ts";
 
 const TOOL_DEFINITIONS: any = {
   readFile: {
@@ -81,5 +88,58 @@ export const singleTurnExecutor = async (
     toolCalls: calls,
     toolNames,
     selectedAny: toolNames.length > 0,
+  };
+};
+
+export const multiTurnWithMocks = async (data: MultiTurnEvalData) => {
+  const tools = buildMockedTools(data.mockTools);
+
+  const messages: ModelMessage[] = data.messages ?? [
+    {
+      role: "system",
+      content: SYSTEM_PROMPT,
+    },
+    {
+      role: "user",
+      content: data.prompt!,
+    },
+  ];
+
+  const results = await generateText({
+    model: openai(data.config?.model ?? "gpt-5-mini"),
+    messages,
+    tools,
+    stopWhen: stepCountIs(data.config?.maxSteps ?? 20),
+  });
+
+  const allToolCalls: string[] = [];
+  const steps = results.steps.map((step) => {
+    const stepToolCalls = (step.toolCalls ?? []).map((call) => {
+      allToolCalls.push(call.toolName);
+      return {
+        toolName: call.toolName,
+        args: "args" in call ? call.args : {},
+      };
+    });
+
+    const stepResults = (step.staticToolResults ?? []).map((result) => ({
+      toolName: result.toolName,
+      result: "result" in result ? result.result : result,
+    }));
+
+    return {
+      toolCalls: stepToolCalls.length > 0 ? stepToolCalls : undefined,
+      toolResults: stepResults.length > 0 ? stepResults : undefined,
+      text: step.text || undefined,
+    };
+  });
+
+  const toolsUsed = [new Set(allToolCalls)];
+
+  return {
+    text: results.text,
+    steps,
+    toolsUsed,
+    toolCallOrder: allToolCalls,
   };
 };

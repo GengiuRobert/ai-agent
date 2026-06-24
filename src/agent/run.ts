@@ -22,6 +22,7 @@ export const runAgent = async (
   const { text, toolCalls } = await generateText({
     model: openai(MODEL_NAME),
     prompt: userMessage,
+    //messages: [],
     system: SYSTEM_PROMPT,
     tools,
     experimental_telemetry: {

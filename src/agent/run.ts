@@ -7,6 +7,14 @@ import { tools } from "./tools/index.ts";
 import { getTracer, Laminar } from "@lmnr-ai/lmnr";
 import { filterCompatibleMessages } from "./system/filterMessages.ts";
 import { executeTool } from "./executeTools.ts";
+import {
+  estimateMessagesTokens,
+  getModelLimits,
+  isOverThreshold,
+  calculateUsagePercentage,
+  compactConversation,
+  DEFAULT_THRESHOLD,
+} from "./context/index.ts";
 
 const MODEL_NAME = "gpt-5-mini";
 
@@ -19,6 +27,8 @@ export const runAgent = async (
   conversationHistory: ModelMessage[],
   callbacks: AgentCallbacks,
 ) => {
+  const modelLimits = getModelLimits(MODEL_NAME);
+
   const workingHistory = filterCompatibleMessages(conversationHistory);
 
   const messages: ModelMessage[] = [
@@ -33,6 +43,12 @@ export const runAgent = async (
     },
   ];
 
+  const precheckTokens = estimateMessagesTokens(messages);
+
+  if (isOverThreshold(precheckTokens.total, modelLimits.contextWindow)) {
+    await compactConversation(messages, MODEL_NAME);
+  }
+
   let fullResponse = "";
 
   while (true) {
@@ -45,6 +61,23 @@ export const runAgent = async (
         tracer: getTracer(),
       },
     });
+
+    const reportTokenUsage = () => {
+      if (callbacks.onTokenUsage) {
+        const usage = estimateMessagesTokens(messages);
+        callbacks.onTokenUsage({
+          inputTokens: usage.input,
+          outputTokens: usage.output,
+          totalTokens: usage.total,
+          contextWindow: modelLimits.contextWindow,
+          threshold: DEFAULT_THRESHOLD,
+          percentage: calculateUsagePercentage(
+            usage.total,
+            modelLimits.contextWindow,
+          ),
+        });
+      }
+    };
 
     const toolCalls: ToolCallInfo[] = [];
     let currentText = "";
@@ -90,6 +123,7 @@ export const runAgent = async (
     if (finishReason !== "tool-calls" || toolCalls.length === 0) {
       const responseMessages = await result.response;
       messages.push(...responseMessages.messages);
+      reportTokenUsage();
       break;
     }
 
@@ -115,6 +149,8 @@ export const runAgent = async (
           },
         ],
       });
+
+      reportTokenUsage();
     }
   }
 

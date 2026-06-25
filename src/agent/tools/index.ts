@@ -2,6 +2,7 @@
 
 import { dateTimeTool } from "./dateTime.ts";
 import { deleteFile, listFiles, readFile, writeFile } from "./file.ts";
+import { runCommand } from "./shell.ts";
 import { webSearch } from "./webSearch.ts";
 
 export const tools = {
@@ -11,4 +12,5 @@ export const tools = {
   listFiles,
   deleteFile,
   webSearch,
+  runCommand,
 };
